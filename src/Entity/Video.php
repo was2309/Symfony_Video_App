@@ -23,7 +23,7 @@ class Video
     #[ORM\Column(type: 'string', length: 255)]
     private $path;
 
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'integer', nullable: true)]
     private $duration;
 
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'videos')]
@@ -63,7 +63,7 @@ class Video
         return $this->duration;
     }
 
-    public function setDuration(int $duration): self
+    public function setDuration(?int $duration): self
     {
         $this->duration = $duration;
 
