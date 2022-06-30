@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class FrontController extends AbstractController
 {
@@ -82,9 +83,17 @@ class FrontController extends AbstractController
     }
 
     #[Route('/login', name: 'login')]
-    public function login(): Response
+    public function login(AuthenticationUtils $helper): Response //executes in background by Symfony
     {
-        return $this->render('front/login.html.twig');
+        return $this->render('front/login.html.twig',[
+            'error' => $helper->getLastAuthenticationError()
+        ]);
+    }
+
+    #[Route('/logout', name: 'logout')]
+    public function logout(): void //executes in background by Symfony
+    {
+        throw new \Exception('This should never be reached!');
     }
 
     #[Route('/payment', name: 'payment')]
