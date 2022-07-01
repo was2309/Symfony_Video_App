@@ -86,7 +86,11 @@ class FrontController extends AbstractController
         $user = new User();
         $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
+
         if($form->isSubmitted() && $form->isValid()){
+            $user = $form->getData();
+            var_dump($request->request->get('user'));
+            die;
             $user->setName($request->request->get('user')['name']);
             $user->setLastName($request->request->get('user')['last_name']);
             $user->setEmail($request->request->get('user')['email']);
