@@ -15,13 +15,17 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class FrontController extends AbstractController
 {
-    public function __construct(ManagerRegistry $doctrine)
+    public function __construct(ManagerRegistry $doctrine,    private TokenStorageInterface $tokenStorage,
+                                RequestStack $requestStack)
     {
         $this->doctrine = $doctrine;
         $this->entityManager = $this->doctrine->getManager();
+        $this->session = $requestStack->getSession();
     }
 
     #[Route('/', name: 'main_page')]
@@ -88,19 +92,18 @@ class FrontController extends AbstractController
         $form->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid()){
-            $user = $form->getData();
-            var_dump($request->request->get('user'));
-            die;
-            $user->setName($request->request->get('user')['name']);
-            $user->setLastName($request->request->get('user')['last_name']);
-            $user->setEmail($request->request->get('user')['email']);
-            $password = $passwordHasher->hashPassword($user, $request->request->get('user')['password']['first']);
+            $userF = $form->getData();
+            // not so safe solution
+            // couldn't solve with getting data from $request->request->get()[] method
+            // used getting data via $form->getData()
+            $password = $passwordHasher->hashPassword($user, $userF->getPassword());
             $user->setPassword($password);
+            $user->setRoles(["ROLE_USER"]);
 
             $this->entityManager->persist($user);
             $this->entityManager->flush();
 
-            $this->loginUserAutomatically($user, $password);
+            $this->loginUserAutomatically($user);
 
             return $this->redirectToRoute('admin_main_page');
         }
@@ -118,11 +121,11 @@ class FrontController extends AbstractController
         ]);
     }
 
-    private function loginUserAutomatically($user, $password){
+    private function loginUserAutomatically($user){
         $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
 
-        $this->get('security.token_storage')->setToken($token);
-        $this->get('session')->set('_security_main', serialize($token));
+        $this->tokenStorage->setToken($token);
+        $this->session->set('_security_main', serialize($token));
     }
 
 
